@@ -47,12 +47,15 @@ export function useGame({ gameId }: { gameId: string }) {
     },
   });
 
+  const isGameStarted = Boolean(game.startedAt);
   const {
     data: { data: promptsData },
   } = useSuspenseQuery({
-    queryKey: ["game", gameId, "prompts"],
+    // `isGameStarted` is part of the key so the board is fetched as soon as the
+    // game transitions from "lobby" to "in progress".
+    queryKey: ["game", gameId, "prompts", isGameStarted],
     queryFn: async () =>
-      game.startedAt ? await server.api.games.game({ gameId }).prompts.get() : { data: null },
+      isGameStarted ? await server.api.games.game({ gameId }).prompts.get() : { data: null },
   });
   const prompts = promptsData?.prompts ?? null;
 
