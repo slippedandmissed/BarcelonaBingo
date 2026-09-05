@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "fmt": "oxfmt --config ../.oxfmtrc.json --write .",
+    "fmt:check": "oxfmt --config ../.oxfmtrc.json --check .",
     "typecheck": "tsc -b",
     "preview": "vite preview"
   },

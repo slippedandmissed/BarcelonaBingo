@@ -7,6 +7,7 @@
   ],
   "scripts": {
     "fmt": "bun run --filter='*' fmt",
+    "fmt:check": "bun run --filter='*' fmt:check",
     "lint": "bun run --filter='*' lint",
     "typecheck": "bun run --filter='*' typecheck"
   },

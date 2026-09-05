@@ -31,19 +31,19 @@ still get things they can actually pull off over text.
 
 ## Tech stack
 
-| Area        | Choice |
-|-------------|--------|
-| Runtime     | [Bun](https://bun.com) 1.3 |
-| Monorepo    | Bun workspaces — `backend/` + `frontend/` |
-| API         | [Elysia](https://elysiajs.com) |
-| Database    | PostgreSQL 16 via [Drizzle ORM](https://orm.drizzle.team) + drizzle-kit migrations |
-| Config      | TypeBox-validated environment |
-| AI          | Anthropic SDK (`claude-haiku-4-5`) or a mock driver |
-| Frontend    | React 19 (+ React Compiler), [Vite](https://vite.dev) 8 |
+| Area        | Choice                                                                                                                             |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime     | [Bun](https://bun.com) 1.3                                                                                                         |
+| Monorepo    | Bun workspaces — `backend/` + `frontend/`                                                                                          |
+| API         | [Elysia](https://elysiajs.com)                                                                                                     |
+| Database    | PostgreSQL 16 via [Drizzle ORM](https://orm.drizzle.team) + drizzle-kit migrations                                                 |
+| Config      | TypeBox-validated environment                                                                                                      |
+| AI          | Anthropic SDK (`claude-haiku-4-5`) or a mock driver                                                                                |
+| Frontend    | React 19 (+ React Compiler), [Vite](https://vite.dev) 8                                                                            |
 | Data layer  | [TanStack Query](https://tanstack.com/query) v5 (suspense) + [Eden Treaty](https://elysiajs.com/eden/treaty/overview) typed client |
-| Styling     | Tailwind CSS v4 |
-| Lint/format | [oxlint](https://oxc.rs) + oxfmt |
-| Dev infra   | Docker Compose (Postgres, Adminer, nginx, hot-reloading API) |
+| Styling     | Tailwind CSS v4                                                                                                                    |
+| Lint/format | [oxlint](https://oxc.rs) + oxfmt                                                                                                   |
+| Dev infra   | Docker Compose (Postgres, Adminer, nginx, hot-reloading API)                                                                       |
 
 ---
 
@@ -110,18 +110,18 @@ Open **http://localhost:5173**.
 
 ### Handy commands
 
-| Command | Where | What |
-|---|---|---|
-| `bun run dev:up` | `backend/` | Start the Docker stack |
-| `bun run dev:down` | `backend/` | Stop it |
-| `bun run dev:tail` | `backend/` | Follow the API logs |
-| `bun run db:generate` | `backend/` | Generate a migration from schema changes |
-| `bun run db:migrate` | `backend/` | Apply pending migrations |
-| `bun run dev` | `frontend/` | Vite dev server |
-| `bun run build` | `frontend/` | Production build → `frontend/dist/` |
-| `bun run typecheck` | root | Typecheck both workspaces |
-| `bun run lint` | root | oxlint both workspaces |
-| `bun run fmt` | root | oxfmt (writes) both workspaces |
+| Command               | Where       | What                                     |
+| --------------------- | ----------- | ---------------------------------------- |
+| `bun run dev:up`      | `backend/`  | Start the Docker stack                   |
+| `bun run dev:down`    | `backend/`  | Stop it                                  |
+| `bun run dev:tail`    | `backend/`  | Follow the API logs                      |
+| `bun run db:generate` | `backend/`  | Generate a migration from schema changes |
+| `bun run db:migrate`  | `backend/`  | Apply pending migrations                 |
+| `bun run dev`         | `frontend/` | Vite dev server                          |
+| `bun run build`       | `frontend/` | Production build → `frontend/dist/`      |
+| `bun run typecheck`   | root        | Typecheck both workspaces                |
+| `bun run lint`        | root        | oxlint both workspaces                   |
+| `bun run fmt`         | root        | oxfmt (writes) both workspaces           |
 
 **Adminer** (database UI, pre-authenticated): http://db.barcelona-bingo.localhost:1234
 
@@ -133,27 +133,27 @@ Both packages read a local `.env` (gitignored). Copy the `.env.example` in each.
 
 ### `backend/.env`
 
-| Variable | Example | Notes |
-|---|---|---|
-| `POSTGRES_HOST` | `postgres` | Compose service name |
-| `POSTGRES_PORT` | `5432` | |
-| `POSTGRES_DB_NAME` | `bingo` | |
-| `POSTGRES_USER` | `bingo_server` | |
-| `POSTGRES_PASSWORD` | `password` | |
-| `POSTGRES_SSL` | `false` | |
-| `ALLOWED_CORS_ORIGINS` | `localhost:5173` | `;`-separated |
-| `ALLOWED_REDIRECT_ORIGINS` | `http://localhost:5173` | `;`-separated; a login `redirectUrl`'s origin must appear here |
-| `SERVER_SECURE` | `false` | `true` in production — sets the `Secure` flag on the session cookie |
-| `PORT` | *(unset)* | Defaults to `80` inside the container |
-| `AI_DRIVER` | `mock` | `mock` (constant text — fine for UI work) or `anthropic` |
-| `ANTHROPIC_API_KEY` | `sk-ant-…` | **Always required** by the config schema, even for `mock`. Only actually used when `AI_DRIVER=anthropic`. |
+| Variable                   | Example                 | Notes                                                                                                     |
+| -------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_HOST`            | `postgres`              | Compose service name                                                                                      |
+| `POSTGRES_PORT`            | `5432`                  |                                                                                                           |
+| `POSTGRES_DB_NAME`         | `bingo`                 |                                                                                                           |
+| `POSTGRES_USER`            | `bingo_server`          |                                                                                                           |
+| `POSTGRES_PASSWORD`        | `password`              |                                                                                                           |
+| `POSTGRES_SSL`             | `false`                 |                                                                                                           |
+| `ALLOWED_CORS_ORIGINS`     | `localhost:5173`        | `;`-separated                                                                                             |
+| `ALLOWED_REDIRECT_ORIGINS` | `http://localhost:5173` | `;`-separated; a login `redirectUrl`'s origin must appear here                                            |
+| `SERVER_SECURE`            | `false`                 | `true` in production — sets the `Secure` flag on the session cookie                                       |
+| `PORT`                     | _(unset)_               | Defaults to `80` inside the container                                                                     |
+| `AI_DRIVER`                | `mock`                  | `mock` (constant text — fine for UI work) or `anthropic`                                                  |
+| `ANTHROPIC_API_KEY`        | `sk-ant-…`              | **Always required** by the config schema, even for `mock`. Only actually used when `AI_DRIVER=anthropic`. |
 
 ### `frontend/.env`
 
-| Variable | Example | Notes |
-|---|---|---|
-| `PROXY_SERVER_TARGET` | `http://barcelona-bingo.localhost:1234` | Where Vite proxies `/api` in dev (the nginx container) |
-| `VITE_SERVER_URL` | *(unset)* | Optional runtime API base URL. Defaults to `window.location.origin`, which is correct in dev thanks to the proxy. |
+| Variable              | Example                                 | Notes                                                                                                             |
+| --------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `PROXY_SERVER_TARGET` | `http://barcelona-bingo.localhost:1234` | Where Vite proxies `/api` in dev (the nginx container)                                                            |
+| `VITE_SERVER_URL`     | _(unset)_                               | Optional runtime API base URL. Defaults to `window.location.origin`, which is correct in dev thanks to the proxy. |
 
 ---
 
@@ -172,14 +172,48 @@ edit files under `backend/drizzle/` by hand.
 
 ---
 
-## Deployment notes
+## Deployment
 
-- `backend/Dockerfile` builds a production image (copies source + `node_modules`,
-  runs as a non-root user). For production set `SERVER_SECURE=true`, real
-  `ALLOWED_*_ORIGINS`, and `AI_DRIVER=anthropic` with a valid key.
-- Frontend: `bun run build` produces a static bundle in `frontend/dist/` to serve
-  from any static host / CDN. Set `VITE_SERVER_URL` at build time if the API is on
-  a different origin.
+Production runs the **backend on [Fly.io](https://fly.io)** (`https://api.barcelona.bingo`)
+and the **frontend on [Cloudflare Pages](https://pages.cloudflare.com)**
+(`https://barcelona.bingo`). Postgres is a managed database (e.g. [Neon](https://neon.tech)
+free tier). The two origins share the `barcelona.bingo` registrable domain, so
+the `SameSite=Lax` session cookie works across them.
+
+### CI/CD (GitHub Actions)
+
+- **`.github/workflows/ci.yml`** — on every PR: `typecheck`, `lint`, `fmt:check`
+  across both workspaces. Also called by the deploy workflow as a gate.
+- **`.github/workflows/deploy.yml`** — on push to `main`, after the gates pass:
+  - `backend` → `flyctl deploy` (builds `backend/Dockerfile`, then runs
+    `bun run db:migrate:prod` as the Fly release command).
+  - `frontend` → `bun run build` (with `VITE_SERVER_URL=https://api.barcelona.bingo`)
+    → `wrangler pages deploy frontend/dist`.
+
+Required GitHub Actions secrets: `FLY_API_TOKEN`, `CLOUDFLARE_API_TOKEN`,
+`CLOUDFLARE_ACCOUNT_ID`.
+
+### Fly.io (`/fly.toml`)
+
+Non-secret config lives in `[env]` (`SERVER_SECURE=true`, `POSTGRES_SSL=true`,
+`AI_DRIVER=anthropic`, `ALLOWED_*_ORIGINS`, `PORT=8080`). Set the rest as secrets:
+
+```bash
+fly secrets set \
+  POSTGRES_HOST=… POSTGRES_PORT=5432 POSTGRES_DB_NAME=… \
+  POSTGRES_USER=… POSTGRES_PASSWORD=… \
+  ANTHROPIC_API_KEY=sk-ant-…
+```
+
+Use the managed database's **direct** (non-pooled) connection details — the
+`postgres` driver uses prepared statements, which a transaction-mode pooler
+(Neon's `-pooler` host, PgBouncer) breaks.
+
+### Frontend
+
+`bun run build` → static bundle in `frontend/dist/`. `VITE_SERVER_URL` must be set
+at build time (the API is on a different origin, so it can't fall back to
+`window.location.origin`).
 
 ---
 
