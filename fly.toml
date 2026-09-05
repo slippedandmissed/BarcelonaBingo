@@ -1,0 +1,44 @@
+# Fly.io configuration for the Barcelona Bingo backend (the `backend/` workspace).
+# The frontend deploys separately to Cloudflare Pages.
+#
+# The build context is this directory (the repo root) because the Docker build
+# needs the Bun workspace root manifest + lockfile; the Dockerfile itself lives
+# in backend/.
+
+app = "barcelona-bingo-api"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "backend/Dockerfile"
+
+[deploy]
+  # Runs in a one-off machine after the image builds, before traffic shifts.
+  release_command = "bun run db:migrate:prod"
+  strategy = "immediate"
+
+# Non-secret config only. Secrets (POSTGRES_*, ANTHROPIC_API_KEY) are set with
+# `fly secrets set` — see README "Deployment".
+[env]
+  PORT = "8080"
+  SERVER_SECURE = "true"
+  POSTGRES_SSL = "true"
+  AI_DRIVER = "anthropic"
+  ALLOWED_CORS_ORIGINS = "https://barcelona.bingo"
+  ALLOWED_REDIRECT_ORIGINS = "https://barcelona.bingo"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Keep one machine warm — no cold starts for the handful of players.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

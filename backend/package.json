@@ -13,8 +13,10 @@
     "dev:tail": "bun run dev:compose logs -f bingo_server",
     "lint": "oxlint",
     "fmt": "oxfmt --config ../.oxfmtrc.json --write .",
+    "fmt:check": "oxfmt --config ../.oxfmtrc.json --check .",
     "typecheck": "tsc --noEmit",
     "db:migrate": "bun run dev:compose run --rm -it bingo_server run ./node_modules/.bin/drizzle-kit migrate",
+    "db:migrate:prod": "drizzle-kit migrate",
     "db:generate": "bun run dev:compose run --rm -it bingo_server run ./node_modules/.bin/drizzle-kit generate"
   },
   "dependencies": {

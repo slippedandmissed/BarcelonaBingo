@@ -1,0 +1,11 @@
+**/node_modules
+**/.env
+**/.env.local
+**/.env.*.local
+.git
+.github
+**/.DS_Store
+frontend/dist
+frontend/src
+frontend/public
+backend/bun.lock
