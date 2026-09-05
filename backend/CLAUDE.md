@@ -1,106 +1,62 @@
+# backend/CLAUDE.md
 
-Default to using Bun instead of Node.js.
+The Barcelona Bingo API — [Elysia](https://elysiajs.com) + [Drizzle](https://orm.drizzle.team)
++ PostgreSQL, running on Bun. Read the repo-root `CLAUDE.md` first; this file only
+adds backend detail.
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Use `bunx <package> <command>` instead of `npx <package> <command>`
-- Bun automatically loads .env, so don't use dotenv.
+## Runtime: prefer Bun's built-ins
 
-## APIs
+- `bun <file>` / `bun test` / `bun install` / `bun run <script>` / `bunx` — never
+  the Node equivalents.
+- `Bun.file(...)` over `node:fs` (see `core/prompt.ts` loading the Mustache
+  template).
+- Bun auto-loads `.env`; don't add `dotenv`.
+- Postgres access goes through Drizzle (`db/db.ts`), which wraps the `postgres`
+  driver — don't reach for `pg` or `Bun.sql` directly.
 
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
+## Structure
 
-## Testing
+| Path | Role |
+|---|---|
+| `src/index.ts` | App wiring: CORS → error handler → API. Exports `type App` (the frontend's typed client is built from this). |
+| `src/config.ts` | TypeBox-validated `process.env` → typed `config` object. Also constructs the AI driver. |
+| `src/api/*` | Elysia route groups. HTTP shape + `body`/`response` schemas + auth only. |
+| `src/core/*` | All business logic. |
+| `src/core/ai/*` | `AiDriver` abstract class + `mock` and `anthropic` implementations. |
+| `src/db/schema/*` | Drizzle tables (`players`, `sessions`, `games`, `gameMemberships`, `boards`, `prompts`, `cachedPrompts`). |
+| `assets/challenge_prompt.mustache` | The AI system prompt. |
 
-Use `bun test` to run tests.
+## Conventions
 
-```ts#index.test.ts
-import { test, expect } from "bun:test";
+- **Every `core` function** takes `tx: Transactable = db` and wraps work in
+  `tx.transaction(async (tx) => …)`. This is how they stay composable and atomic.
+- **Routes** resolve auth with the `requireSession` plugin (from `core/auth.ts`),
+  which provides `{ player, session }` and 401s otherwise. Public routes
+  (`POST /player`, `GET /player/login`, `GET /player/:id`) skip it.
+- **Errors**: `throw new HttpError(status, message)`; never build error responses
+  by hand.
+- **Membership checks**: `requirePlayerMemberOfGame` (403 if not a member) guards
+  game/board/prompt access — keep new game routes behind it.
 
-test("hello world", () => {
-  expect(1).toBe(1);
-});
+## Local dev & DB
+
+This package is driven via `docker compose` (see `docker-compose.yml`): `postgres`,
+`adminer`, an `nginx` reverse proxy on port `1234`, and `bingo_server` (the API,
+`bun run --watch`).
+
+```bash
+bun run dev:up        # start everything
+bun run dev:tail      # follow API logs
+bun run dev:down      # stop
+bun run db:generate   # schema change -> SQL migration in drizzle/ (commit it)
+bun run db:migrate    # apply migrations
 ```
 
-## Frontend
+`db:generate` / `db:migrate` run `drizzle-kit` *inside* the Compose network so it
+can resolve `POSTGRES_HOST=postgres`. Running them from the host won't work.
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
+## Adding an env var
 
-Server:
-
-```ts#index.ts
-import index from "./index.html"
-
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
-```
-
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
-
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
-
-With the following `frontend.tsx`:
-
-```tsx#frontend.tsx
-import React from "react";
-import { createRoot } from "react-dom/client";
-
-// import .css files directly and it works
-import './index.css';
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
-```
-
-Then, run index.ts
-
-```sh
-bun --hot ./index.ts
-```
-
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
+1. Add it to the `Env` schema in `src/config.ts` and surface it under `config`.
+2. Add it to `.env` and `.env.example`.
+3. If containers need it at build/run time, wire it through `docker-compose.yml`.

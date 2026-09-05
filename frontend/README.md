@@ -1,35 +1,31 @@
-# React + TypeScript + Vite
+# frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The Barcelona Bingo web app — React 19 (+ React Compiler), Vite, TanStack Query,
+Tailwind CSS v4, and an [Eden Treaty](https://elysiajs.com/eden/treaty/overview)
+client typed off the backend.
 
-Currently, two official plugins are available:
+See the [repo root README](../README.md) for the full picture. Quick reference:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-You can also try [the experimental native React Compiler support in plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md#rust-react-compiler) by using `compiler: true` in the plugin options instead of using the Babel plugin.
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+cp .env.example .env
+bun run dev        # Vite on http://localhost:5173  (must be this port)
+bun run build      # production build -> dist/
+bun run typecheck
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+> The dev server has to run on **port 5173** — it's the only origin the API allows
+> for CORS and login redirects.
+
+## Layout
+
+| Path | What |
+|---|---|
+| `src/pages/` | `Home` (sign-up / recovery-code login), `Dashboard` (create / join / your games) |
+| `src/components/Game.tsx` | The bingo board, lobby, win/abort states |
+| `src/components/ui.tsx` | Shared UI kit — buttons, cards, inputs, pills, avatars, modal shell, confetti |
+| `src/hooks/` | `useGame`, `useGameIds`, `useAuthState`, `usePlayer` — TanStack Query wrappers |
+| `src/utils/server.ts` | Typed API client (Eden Treaty) |
+| `src/utils/gameStatus.ts` | Game-status derivation, labels, list sort order |
+| `src/index.css` | Tailwind v4 theme — design tokens live in `@theme` / `@utility` |
+
+Working on the code? See the repo-root [`CLAUDE.md`](../CLAUDE.md).
