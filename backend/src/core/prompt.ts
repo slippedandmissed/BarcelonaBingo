@@ -13,11 +13,8 @@ import { and, eq, not, isNotNull } from "drizzle-orm";
 import { getPlayerById } from "./player";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "./board";
 import { HttpError } from "./errors/http_error";
-import Mustache from "mustache";
 import path from "path";
 import { config } from "../config";
-
-export async function generatePrompt() {}
 
 export async function markPromptAsCompleted({
   prompt,
@@ -115,23 +112,80 @@ function getValidityFingerprint({
   return [player.id, isRemote, ...otherPlayers.flatMap((p) => [p.player.id, p.isRemote])].join(",");
 }
 
-async function generateManyPromptTexts({
-  ...context
+type OtherPlayer = { player: Player; isRemote: boolean };
+
+let cachedSystemPrompt: string | null = null;
+
+/** The static persona / style / rules. Identical for every request. */
+async function challengeSystemPrompt(): Promise<string> {
+  cachedSystemPrompt ??= await Bun.file(
+    path.join(__dirname, "..", "..", "assets", "challenge_system_prompt.md"),
+  ).text();
+  return cachedSystemPrompt;
+}
+
+/** The request specific to one player and the current roster. */
+function buildChallengeUserPrompt({
+  player,
+  isRemote,
+  otherPlayers,
+  batchSize,
 }: {
   player: Player;
   isRemote: boolean;
-  otherPlayers: {
-    player: Player;
-    isRemote: boolean;
-  }[];
+  otherPlayers: OtherPlayer[];
   batchSize: number;
-}): Promise<string[]> {
-  const systemPrompt = Mustache.render(
-    await Bun.file(path.join(__dirname, "..", "..", "assets", "challenge_prompt.mustache")).text(),
-    context,
+}): string {
+  const roster = otherPlayers
+    .map((other) => `- ${other.player.name} (${other.isRemote ? "remote" : "in person"})`)
+    .join("\n");
+  const anyRemoteTargets = otherPlayers.some((other) => other.isRemote);
+
+  const lines = [
+    `Write ${batchSize} challenges for ${player.name}, who is playing ${
+      isRemote ? "REMOTELY" : "IN PERSON"
+    }.`,
+    "",
+    "The other players are:",
+    roster || "- (nobody else yet)",
+    "",
+    "For this batch specifically:",
+    `- Every challenge is something ${player.name} gets one of the other players to do or say. Never make ${player.name} the mark.`,
+  ];
+
+  if (isRemote) {
+    lines.push(
+      `- ${player.name} is remote, so every challenge must work over the group chat, DMs, or a voice/video call. No physical actions.`,
+    );
+  } else if (anyRemoteTargets) {
+    lines.push(
+      "- Physical challenges are fine, but any challenge that names or could involve a remote player must also work over text or a call.",
+    );
+  }
+
+  lines.push(
+    '- Vary the mark: mostly "another player", name a specific player for some, and offer a choice of two named players for a few. Spread the names around.',
   );
 
-  return (await config.ai.generateResponse(systemPrompt)).split("\n");
+  return lines.join("\n");
+}
+
+async function generateManyPromptTexts({
+  player,
+  isRemote,
+  otherPlayers,
+  batchSize,
+}: {
+  player: Player;
+  isRemote: boolean;
+  otherPlayers: OtherPlayer[];
+  batchSize: number;
+}): Promise<string[]> {
+  return config.ai.generateChallenges({
+    system: await challengeSystemPrompt(),
+    user: buildChallengeUserPrompt({ player, isRemote, otherPlayers, batchSize }),
+    count: batchSize,
+  });
 }
 
 async function getAndDeleteCachedPromptText({

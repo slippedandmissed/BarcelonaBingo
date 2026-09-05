@@ -1,4 +1,9 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": ["frontend/dist/**", "backend/drizzle/**", "**/CLAUDE.md"]
+  "ignorePatterns": [
+    "frontend/dist/**",
+    "backend/drizzle/**",
+    "backend/assets/**",
+    "**/*.md"
+  ]
 }
