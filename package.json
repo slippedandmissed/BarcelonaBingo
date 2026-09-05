@@ -1,0 +1,17 @@
+{
+  "name": "barcelona-bingo",
+  "private": "true",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "fmt": "bun run --filter='*' fmt",
+    "lint": "bun run --filter='*' lint",
+    "typecheck": "bun run --filter='*' typecheck"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.66.0",
+    "oxlint": "^1.81.0"
+  }
+}

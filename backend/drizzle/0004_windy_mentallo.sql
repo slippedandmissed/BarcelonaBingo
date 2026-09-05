@@ -1,0 +1,1 @@
+ALTER TABLE "game_memberships" ADD CONSTRAINT "game_memberships_game_id_player_id_unique" UNIQUE("game_id","player_id");

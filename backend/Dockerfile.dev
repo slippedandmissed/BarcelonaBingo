@@ -1,0 +1,9 @@
+FROM oven/bun:1-alpine
+
+RUN apk add --no-cache \
+  ffmpeg
+
+WORKDIR /app/backend
+
+ENTRYPOINT [ "/usr/local/bin/bun" ]
+CMD [ "run", "--watch", "." ]

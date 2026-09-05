@@ -1,0 +1,45 @@
+{
+  "name": "@barcelona-bingo/frontend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "fmt": "oxfmt --config ../.oxfmtrc.json --write .",
+    "typecheck": "tsc -b",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@barcelona-bingo/backend": "workspace:*",
+    "@elysia/eden": "^1.4.10",
+    "@fortawesome/fontawesome-svg-core": "^7.3.1",
+    "@fortawesome/free-regular-svg-icons": "^7.3.1",
+    "@fortawesome/free-solid-svg-icons": "^7.3.1",
+    "@fortawesome/react-fontawesome": "^3.5.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tanstack/react-query": "^5.102.8",
+    "@tanstack/react-query-devtools": "^5.102.8",
+    "clsx": "^2.1.1",
+    "dotenv": "^17.4.2",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-error-boundary": "^6.1.5",
+    "react-markdown": "^10.1.0",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@rolldown/plugin-babel": "^0.2.3",
+    "@tanstack/eslint-plugin-query": "^5.102.8",
+    "@types/babel__core": "^7.20.5",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.1.0",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.2.2"
+  }
+}

@@ -1,0 +1,1 @@
+ALTER TABLE "prompts" ADD COLUMN "is_free_space" boolean DEFAULT false NOT NULL;
