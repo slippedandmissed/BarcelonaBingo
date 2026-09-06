@@ -12,7 +12,7 @@ import {
   type GameStatus,
 } from "../../utils/gameStatus";
 import { server } from "../../utils/server";
-import { Button, Card, Checkbox, Pill, TextInput } from "../../components/ui";
+import { Button, Card, Checkbox, Pill, RefreshButton, TextInput } from "../../components/ui";
 
 type GameSummary = ReturnType<typeof useGame>["game"];
 
@@ -67,7 +67,7 @@ function MyGames({
 }: {
   setCurrentGameId: Dispatch<SetStateAction<string | null>>;
 }) {
-  const { gameIds } = useGameIds();
+  const { gameIds, refresh } = useGameIds();
 
   // Load every game so the list can be ordered by status on the client. The
   // player is only ever in a handful of games, so this stays cheap. These share
@@ -88,7 +88,10 @@ function MyGames({
 
   return (
     <section>
-      <h2 className="font-display text-2xl text-tinta">Your games</h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-2xl text-tinta">Your games</h2>
+        <RefreshButton onRefresh={refresh} />
+      </div>
       {games.length ? (
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {games.map(({ gameId, game, status }) => (

@@ -341,6 +341,55 @@ export function Confetti({ count = 90 }: { count?: number }) {
 /*  Copy-to-clipboard button                                                   */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * There are no websockets — other players' actions (joining, dabbing,
+ * winning) only show up once you refetch. Drop this wherever staleness would
+ * otherwise go unnoticed; `onRefresh` should return the invalidation promise
+ * so the spin stops once the refetch actually lands.
+ */
+export function RefreshButton({
+  onRefresh,
+  label = "Refresh",
+  className,
+}: {
+  onRefresh: () => Promise<unknown>;
+  label?: string;
+  className?: string;
+}) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  return (
+    <button
+      type="button"
+      aria-label={label || "Refresh"}
+      onClick={() => {
+        setIsRefreshing(true);
+        void onRefresh().finally(() => setIsRefreshing(false));
+      }}
+      disabled={isRefreshing}
+      className={clsx(
+        "inline-flex items-center gap-1.5 rounded-xl border-2 border-tinta bg-white px-2.5 py-1 font-heading text-xs font-semibold shadow-hard-sm transition-all hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-60",
+        className,
+      )}
+    >
+      <svg
+        viewBox="0 0 20 20"
+        className={clsx("h-3.5 w-3.5", isRefreshing && "animate-spin")}
+        fill="none"
+      >
+        <path
+          d="M16.5 10a6.5 6.5 0 1 1-2-4.7M16.5 3.5v4.2h-4.2"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      {label}
+    </button>
+  );
+}
+
 export function CopyButton({
   value,
   label = "Copy",
