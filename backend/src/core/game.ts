@@ -1,8 +1,8 @@
 import { db, type Transactable } from "../db/db";
-import { games, gameMemberships, type Player, type Game, players } from "../db/schema";
+import { games, gameMemberships, type Player, type Game, type Board, players } from "../db/schema";
 import { and, eq } from "drizzle-orm";
 import { HttpError } from "./errors/http_error";
-import { createBoard, getWinningBoard } from "./board";
+import { createBoard, getBoardsForGame, getWinningBoard, populateBoardPrompts } from "./board";
 import { generateRandomCode } from "./code";
 import { requirePlayerMemberOfGame } from "./auth";
 
@@ -152,6 +152,17 @@ export async function listGameMembers({
   ).map((row) => row.players);
 }
 
+/**
+ * Marks the game started and creates each player's board, then returns
+ * immediately — the per-player challenge generation is the slow, LLM-bound
+ * part, so it's kicked off in the background rather than awaited here. The
+ * frontend polls `GET /game/:gameId` (`boardsReady` / `boardsFailed`) and
+ * shows the board once every player's is ready.
+ *
+ * Calling this again on an already-started game is how a retry after a
+ * failed generation works: nothing about the "not started yet" setup re-runs,
+ * only the boards still marked `failedAt` are regenerated.
+ */
 export async function startGame({
   game,
   tx = db,
@@ -159,16 +170,31 @@ export async function startGame({
   game: Game;
   tx?: Transactable;
 }): Promise<void> {
-  return await tx.transaction(async (tx) => {
+  const boardsToPopulate = await tx.transaction(async (tx) => {
     if (await isGameEnded({ game, tx })) {
       throw new HttpError(400, "Cannot start a game that has already ended.");
     }
-    await tx.update(games).set({ startedAt: new Date() }).where(eq(games.id, game.id));
-    const members = await listGameMembers({ game, tx });
-    for (const member of members) {
-      await createBoard({ player: member, game, tx });
+    if (!game.startedAt) {
+      await tx.update(games).set({ startedAt: new Date() }).where(eq(games.id, game.id));
+      const members = await listGameMembers({ game, tx });
+      const newBoards: Board[] = [];
+      for (const member of members) {
+        newBoards.push(await createBoard({ player: member, game, tx }));
+      }
+      return newBoards;
     }
+    return (await getBoardsForGame({ game, tx })).filter((board) => board.failedAt !== null);
   });
+
+  // Not awaited: generating all these boards' challenges in parallel (rather
+  // than one big transaction looping over every player, like before) is what
+  // makes N players' worth of generation take about as long as one player's,
+  // not N times as long.
+  for (const board of boardsToPopulate) {
+    void populateBoardPrompts({ board }).catch((err) => {
+      console.error(`Failed to generate board ${board.id}'s challenges`, err);
+    });
+  }
 }
 
 export async function getGamesForPlayer({

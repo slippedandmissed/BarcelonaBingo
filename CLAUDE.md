@@ -70,6 +70,15 @@ Never hand-edit anything under `backend/drizzle/`.
   one's in-person/remote flag. They're produced in batches and cached, keyed by a
   "validity fingerprint" of the roster + remote flags (`core/prompt.ts`); a swap
   pulls from that cache, refilling it when empty.
+- **Starting a game is async.** `startGame` marks the game started and creates
+  each board's row + free space square, then kicks off per-board challenge
+  generation in the background (not awaited) so the request returns
+  immediately — the LLM calls are what made this slow, and Fly/browser
+  connection timeouts don't tolerate a multi-minute response. `boards.readyAt`
+  / `boards.failedAt` (set by `populateBoardPrompts`) surface as `boardsReady`
+  / `boardsFailed` on `GET /game/:gameId`; the frontend polls that endpoint
+  until ready. Calling `startGame` again on an already-started game retries
+  only the boards left with `failedAt` set.
 
 ## Frontend (`frontend/src`)
 
@@ -80,8 +89,10 @@ Never hand-edit anything under `backend/drizzle/`.
   `Confetti` in `components/ui.tsx`).
 - **Data:** TanStack Query with `useSuspenseQuery` / `useSuspenseQueries`. Query
   keys in use: `["authState"]`, `["games"]`, `["game", id]`,
-  `["game", id, "prompts", isStarted]`, `["player", id]`. Mutations invalidate by
-  key **prefix**.
+  `["game", id, "prompts", isReady]`, `["player", id]`. Mutations invalidate by
+  key **prefix**. The `["game", id]` query polls every 2s while
+  `getGameStatus(...) === "generating"` (see `useGame`) — that's what surfaces
+  the background board generation started by `POST /game/:gameId/start`.
 - **API client:** Eden Treaty in `utils/server.ts`, typed off the backend's
   exported `App` type. The `t.Object(...)` **`response` schemas in `api/*` are the
   contract** — when you change a payload, change both ends in the same pass.

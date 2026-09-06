@@ -15,7 +15,13 @@ import {
 import type { Board, Game, Prompt } from "../db/schema/game";
 import { HttpError } from "../core/errors/http_error";
 import { db } from "../db/db";
-import { getBoardByPlayerAndGame, getPromptsForBoard, getWinningPlayer } from "../core/board";
+import {
+  areAllBoardsReady,
+  didAnyBoardFail,
+  getBoardByPlayerAndGame,
+  getPromptsForBoard,
+  getWinningPlayer,
+} from "../core/board";
 import {
   getPromptById,
   getRandomCompletedNonFreeSpacePrompt,
@@ -104,6 +110,11 @@ export default new Elysia({ prefix: "/games" })
               abortedAt,
               winner: (await getWinningPlayer({ game, tx }))?.id ?? null,
               playerIds: (await listGameMembers({ game, tx })).map((player) => player.id),
+              // Challenge generation runs in the background after start (see
+              // core/game.ts#startGame) — these tell the frontend when it's
+              // safe to fetch prompts, and whether to offer a retry.
+              boardsReady: startedAt ? await areAllBoardsReady({ game, tx }) : false,
+              boardsFailed: startedAt ? await didAnyBoardFail({ game, tx }) : false,
             };
           });
         },
@@ -116,6 +127,8 @@ export default new Elysia({ prefix: "/games" })
             abortedAt: t.Nullable(t.Date()),
             winner: t.Nullable(t.String()),
             playerIds: t.Array(t.String()),
+            boardsReady: t.Boolean(),
+            boardsFailed: t.Boolean(),
           }),
         },
       )

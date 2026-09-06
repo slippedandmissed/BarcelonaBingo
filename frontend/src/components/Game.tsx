@@ -5,7 +5,7 @@ import { getUrlFromGameId } from "../utils/gameIdUrl";
 import { BINGO_COLORS, BINGO_LETTERS } from "../utils/bingo";
 import { getGameStatus, GAME_STATUS_LABEL } from "../utils/gameStatus";
 import Markdown from "react-markdown";
-import { Avatar, Button, Card, Confetti, CopyButton, ModalShell, Pill } from "./ui";
+import { Avatar, BingoBall, Button, Card, Confetti, CopyButton, ModalShell, Pill } from "./ui";
 
 const MARKDOWN_INLINE = { p: "span" } as const;
 
@@ -69,6 +69,10 @@ export function Game({
 
       {status === "lobby" ? (
         <NotYetStartedGame gameId={gameId} />
+      ) : status === "generating" ? (
+        <GeneratingGame gameId={gameId} />
+      ) : status === "generation_failed" ? (
+        <GenerationFailedGame gameId={gameId} />
       ) : status === "won" ? (
         <WonGame gameId={gameId} />
       ) : status === "aborted" ? (
@@ -122,6 +126,45 @@ function NotYetStartedGame({ gameId }: { gameId: string }) {
         disabled={startGame.isPending}
       >
         {startGame.isPending ? "Dealing cards…" : "Start game"}
+      </Button>
+    </Card>
+  );
+}
+
+function GeneratingGame({ gameId }: { gameId: string }) {
+  const { game } = useGame({ gameId });
+  return (
+    <Card className="p-10 text-center">
+      <div className="flex justify-center">
+        <BingoBall />
+      </div>
+      <p className="mt-4 font-display text-2xl text-tinta">Dealing everyone&apos;s cards…</p>
+      <p className="mt-2 font-body text-sm text-tinta-soft">
+        The AI is writing {game.playerIds.length} custom set
+        {game.playerIds.length === 1 ? "" : "s"} of challenges. This can take a little while — feel
+        free to leave this open, it&apos;ll update on its own.
+      </p>
+    </Card>
+  );
+}
+
+function GenerationFailedGame({ gameId }: { gameId: string }) {
+  const { startGame } = useGame({ gameId });
+  return (
+    <Card tone="cream" className="border-dashed p-10 text-center">
+      <p className="font-display text-2xl text-coral-deep">Dealing cards failed</p>
+      <p className="mt-2 font-body text-sm text-tinta-soft">
+        Something went wrong generating one or more players' challenges. No harm done — you can try
+        again.
+      </p>
+      <Button
+        variant="mint"
+        size="lg"
+        className="mt-6"
+        onClick={() => startGame.mutate()}
+        disabled={startGame.isPending}
+      >
+        {startGame.isPending ? "Retrying…" : "Retry"}
       </Button>
     </Card>
   );
