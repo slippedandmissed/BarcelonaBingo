@@ -14,6 +14,10 @@ import { HttpError } from "./errors/http_error";
 
 export const SESSION_COOKIE_NAME = "__session" as const;
 
+// Shared by the session row's `expiresAt` and the cookie's `maxAge` (in
+// api/player.ts) so the two can't drift apart.
+export const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
+
 export async function createSessionForPlayer({
   player,
   tx = db,
@@ -26,8 +30,8 @@ export async function createSessionForPlayer({
       .insert(sessions)
       .values({
         playerId: player.id,
-        expiresAt: new Date(Date.now() + 7 * 24 * 1000 * 60 * 60),
-      }) // 1 week expiration
+        expiresAt: new Date(Date.now() + SESSION_DURATION_MS),
+      })
       .returning()
   )[0]!;
 }
