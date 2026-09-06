@@ -10,7 +10,18 @@ export function useGameIds() {
     queryFn: () => server.api.games.get(),
   });
   function invalidate() {
-    queryClient.invalidateQueries({ queryKey: ["games"] });
+    return queryClient.invalidateQueries({ queryKey: ["games"] });
+  }
+
+  // For a manual refresh: also re-fetches every game already loaded into the
+  // list (each `["game", id]` entry), not just the id list itself — there are
+  // no websockets, so this is how a stale "in the lobby" / player count on
+  // the dashboard catches up.
+  function refresh() {
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["games"] }),
+      queryClient.invalidateQueries({ queryKey: ["game"] }),
+    ]);
   }
 
   const createGame = useMutation({
@@ -27,5 +38,5 @@ export function useGameIds() {
     },
   });
 
-  return { gameIds: games!.gameIds, createGame, joinGame, invalidate };
+  return { gameIds: games!.gameIds, createGame, joinGame, invalidate, refresh };
 }

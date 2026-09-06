@@ -25,8 +25,10 @@ export function useGame({ gameId }: { gameId: string }) {
   });
   const game = data.data!;
 
+  // Returns the invalidation promise so a manual `RefreshButton` knows when
+  // the refetch has actually landed, not just when it was kicked off.
   function invalidate() {
-    queryClient.invalidateQueries({ queryKey: ["game", gameId] });
+    return queryClient.invalidateQueries({ queryKey: ["game", gameId] });
   }
 
   const startGame = useMutation({

@@ -5,7 +5,17 @@ import { getUrlFromGameId } from "../utils/gameIdUrl";
 import { BINGO_COLORS, BINGO_LETTERS } from "../utils/bingo";
 import { getGameStatus, GAME_STATUS_LABEL } from "../utils/gameStatus";
 import Markdown from "react-markdown";
-import { Avatar, BingoBall, Button, Card, Confetti, CopyButton, ModalShell, Pill } from "./ui";
+import {
+  Avatar,
+  BingoBall,
+  Button,
+  Card,
+  Confetti,
+  CopyButton,
+  ModalShell,
+  Pill,
+  RefreshButton,
+} from "./ui";
 
 const MARKDOWN_INLINE = { p: "span" } as const;
 
@@ -16,7 +26,7 @@ export function Game({
   gameId: string;
   goBackToDashboard: () => void;
 }) {
-  const { game } = useGame({ gameId });
+  const { game, invalidate } = useGame({ gameId });
 
   const status = getGameStatus(game);
   const statusLabel = GAME_STATUS_LABEL[status];
@@ -43,8 +53,11 @@ export function Game({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="font-display text-3xl text-tinta sm:text-4xl">{game.name}</h1>
-            <div className="mt-2">
+            <div className="mt-2 flex items-center gap-2">
               <Pill tone={status}>{statusLabel}</Pill>
+              {/* No websockets, so this is the only way to see e.g. a player
+                  joining the lobby or dabbing a square without reloading. */}
+              <RefreshButton onRefresh={invalidate} label="" />
             </div>
           </div>
           <div className="flex flex-col items-end gap-2">
