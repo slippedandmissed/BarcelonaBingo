@@ -5,6 +5,7 @@ import {
   createSessionForPlayer,
   requireSession,
   SESSION_COOKIE_NAME,
+  SESSION_DURATION_MS,
   listSessionsForPlayer,
   revokeSession,
 } from "../core/auth";
@@ -53,6 +54,12 @@ export default new Elysia({ prefix: "/player" })
           sameSite: "lax",
           path: "/",
           secure: config.server.secure,
+          // Without this, the cookie has no Expires/Max-Age and is a
+          // "session cookie" — most clients drop those on browser exit, and
+          // mobile browsers (iOS Chrome/Safari in particular) do this far
+          // more eagerly than desktop, e.g. on backgrounding the app. Match
+          // the actual session lifetime so login persists across visits.
+          maxAge: SESSION_DURATION_MS / 1000,
         });
         return redirect(redirectUrl);
       });
