@@ -274,10 +274,15 @@ async function generatePromptText({
     if (cached) {
       return cached;
     }
+    // Right-sized to exactly what one board needs (every cell but the free
+    // space), so a fresh board's generation asks the AI for only as many
+    // challenges as it will actually use. A swap empties the cache again
+    // later and refills at the same size.
+    const hasFreeSpace = BOARD_WIDTH % 2 === 1 && BOARD_HEIGHT % 2 === 1;
     await populatePromptCache({
       tx,
       ...rest,
-      batchSize: BOARD_WIDTH * BOARD_HEIGHT * 2,
+      batchSize: BOARD_WIDTH * BOARD_HEIGHT - (hasFreeSpace ? 1 : 0),
     });
     return (await getAndDeleteCachedPromptText({ tx, ...rest }))!;
   });
@@ -295,15 +300,47 @@ async function getGameMembershipByBoard({
   )[0]!;
 }
 
+export type PromptGenerationContext = {
+  player: Player;
+  isRemote: boolean;
+  otherPlayers: { player: Player; isRemote: boolean }[];
+};
+
+/**
+ * Everything `createPrompt` needs to generate a non-free-space challenge for
+ * this board. Fetch it once and pass it to every `createPrompt` call when
+ * populating a whole board, instead of each of the ~24 cells re-querying the
+ * player and roster for itself.
+ */
+export async function getPromptGenerationContextForBoard({
+  board,
+  tx = db,
+}: {
+  board: Board;
+  tx?: Transactable;
+}): Promise<PromptGenerationContext> {
+  return await tx.transaction(async (tx) => {
+    const player = await getPlayerByBoard({ board, tx });
+    const membership = await getGameMembershipByBoard({ board, tx });
+    const otherPlayers = await getOtherPlayersByBoard({ board, tx });
+    return { player, isRemote: membership.isRemote, otherPlayers };
+  });
+}
+
 export async function createPrompt({
   board,
   row,
   column,
+  context,
   tx = db,
 }: {
   board: Board;
   row: number;
   column: number;
+  /** Reuse a context from `getPromptGenerationContextForBoard` instead of
+   *  looking the player/roster up again — pass it when creating several
+   *  cells for the same board back-to-back. */
+  context?: PromptGenerationContext;
   tx?: Transactable;
 }): Promise<void> {
   return await tx.transaction(async (tx) => {
@@ -322,13 +359,12 @@ export async function createPrompt({
         isFreeSpace: true,
       });
     } else {
-      const player = await getPlayerByBoard({ board, tx });
-      const membership = await getGameMembershipByBoard({ board, tx });
-      const otherPlayers = await getOtherPlayersByBoard({ board, tx });
+      const { player, isRemote, otherPlayers } =
+        context ?? (await getPromptGenerationContextForBoard({ board, tx }));
       await tx.insert(prompts).values({
         text: await generatePromptText({
           player,
-          isRemote: membership.isRemote,
+          isRemote,
           otherPlayers,
           tx,
         }),

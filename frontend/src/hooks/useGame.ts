@@ -2,6 +2,12 @@ import { server } from "../utils/server";
 import { useSuspenseQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useGameIds } from "./useGameIds";
 import { useMemo } from "react";
+import { getGameStatus } from "../utils/gameStatus";
+
+// While challenges are generating in the background, poll for the game to
+// flip to "playing" (or "generation_failed"). See core/game.ts#startGame on
+// the backend for why start doesn't just block until this is done.
+const GENERATING_POLL_INTERVAL_MS = 2000;
 
 export function useGame({ gameId }: { gameId: string }) {
   const queryClient = useQueryClient();
@@ -11,6 +17,11 @@ export function useGame({ gameId }: { gameId: string }) {
   const { data } = useSuspenseQuery({
     queryKey: ["game", gameId],
     queryFn: () => server.api.games.game({ gameId }).get(),
+    refetchInterval: (query) => {
+      const game = query.state.data?.data;
+      if (!game) return false;
+      return getGameStatus(game) === "generating" ? GENERATING_POLL_INTERVAL_MS : false;
+    },
   });
   const game = data.data!;
 
@@ -47,15 +58,18 @@ export function useGame({ gameId }: { gameId: string }) {
     },
   });
 
-  const isGameStarted = Boolean(game.startedAt);
+  // Boards populate in the background after start, so "started" isn't enough —
+  // wait for `boardsReady` too, or the board would render before it has any
+  // (non-free-space) squares.
+  const isGameReady = getGameStatus(game) === "playing";
   const {
     data: { data: promptsData },
   } = useSuspenseQuery({
-    // `isGameStarted` is part of the key so the board is fetched as soon as the
-    // game transitions from "lobby" to "in progress".
-    queryKey: ["game", gameId, "prompts", isGameStarted],
+    // `isGameReady` is part of the key so the board is fetched as soon as the
+    // game transitions to "playing".
+    queryKey: ["game", gameId, "prompts", isGameReady],
     queryFn: async () =>
-      isGameStarted ? await server.api.games.game({ gameId }).prompts.get() : { data: null },
+      isGameReady ? await server.api.games.game({ gameId }).prompts.get() : { data: null },
   });
   const prompts = promptsData?.prompts ?? null;
 

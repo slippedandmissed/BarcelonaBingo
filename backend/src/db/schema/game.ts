@@ -36,6 +36,12 @@ export const boards = pgTable("boards", {
   gameMembershipId: uuid("game_membership_id")
     .notNull()
     .references(() => gameMemberships.id, { onDelete: "cascade" }),
+  // Challenge generation happens in the background after the board row is
+  // created (see core/game.ts#startGame). Neither set while it's in flight;
+  // readyAt once every non-free square has a challenge, failedAt if that
+  // background work threw (a retry clears failedAt and tries again).
+  readyAt: timestamp("ready_at"),
+  failedAt: timestamp("failed_at"),
 });
 
 export type Board = typeof boards.$inferSelect;

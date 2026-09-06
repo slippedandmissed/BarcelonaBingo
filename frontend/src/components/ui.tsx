@@ -176,6 +176,8 @@ export function BingoChips({ className }: { className?: string }) {
 
 const PILL_TONES = {
   lobby: "bg-sol/25 text-tinta border-sol-deep",
+  generating: "bg-sol/25 text-tinta border-sol-deep",
+  generation_failed: "bg-coral/20 text-coral-deep border-coral",
   playing: "bg-mar/15 text-mar-deep border-mar",
   won: "bg-menta/20 text-menta-deep border-menta",
   aborted: "bg-tinta/10 text-tinta-soft border-tinta-soft",
